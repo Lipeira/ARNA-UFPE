@@ -22,6 +22,7 @@ Com o PERT e o CPM pegando:
 1. Deploy Aplicativo
 2. Testar todas as funcionalidades para verificar se estão pegando
 3. Ver problema Graphviz
+4. Pesquisar NEXTJS -- INTEGRAÇÃO BACK-FRONT
 
 ## DOING
 
