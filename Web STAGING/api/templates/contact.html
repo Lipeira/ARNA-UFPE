@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Contato</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='contact.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='modalAvatar.png') }}">
+</head>
+<body>
+  <header>
+    <div class="logo">
+        <a href="{{ url_for('home') }}">
+            ARNA
+        </a>
+    </div>
+    <nav>
+        <ul>
+            <li class="dropdown">
+                <a href="{{ url_for('home') }}">
+                    ▼ Analisar
+                </a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('home') }}">CPM</a>
+                    <a href="{{ url_for('PERT') }}">PERT</a>
+                </div>
+            </li>
+            <li><a href="#">Resultado</a></li>
+            <li><a href="{{ url_for('help') }}">Ajuda</a></li>
+            <li><a class="active" href="{{ url_for('contact') }}">Contato</a></li>
+        </ul>
+    </nav>
+    <div class="profile dropdown">
+        <div class="profile-dropdown dropdown">
+            <img src="{{ url_for('static', filename='avatar.png') }}" alt="Avatar" onclick="toggleDropdown()">
+            <div class="dropdown-content dropdown">
+                <a href="{{ url_for('logout') }}">Sair</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+  <h2>Entre em contato</h2>
+  <form>
+    <div class="form-group">
+      <label for="name">Nome:</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" name="email" required>
+    </div>
+
+    <div class="form-group">
+      <label for="message">Mensagem:</label>
+      <textarea id="message" name="message" required></textarea>
+    </div>
+
+    <button type="submit">Enviar</button>
+  </form>
+</div>
+
+<footer style="margin-top: 350px;">
+  <div class="footer-content">
+      <div class="footer-logo">
+          <img src="{{ url_for('static', filename='ufpe.png') }}" alt="Random Logo">
+      </div>
+      <div class="footer-links">
+          <a href="#">Termos</a>
+          <a href="#">Privacidade</a>
+          <a href="#">Cookies</a>
+      </div>
+  </div>
+</footer>
+
+</body>
+</html>
