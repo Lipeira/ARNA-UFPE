@@ -160,14 +160,40 @@ def realizar_analise(atividades, Tipo):
         return caminho_critico, tempo_total
             
     elif Tipo == 'CPM':
-            
+
             def calcular_es_ls(G):
-                # Implemente a função calcular_es_ls conforme necessário
-                pass
+                    # Inicialize dicionários para armazenar os valores de ES e LS
+                    es = {}
+                    ls = {}
+
+                    # Inicialize todos os ES com zero
+                    for node in G.nodes:
+                        es[node] = 0
+
+                    # Inicialize todos os LS com um valor grande (infinito)
+                    for node in G.nodes:
+                        ls[node] = float('inf')
+
+                    # Ordenação topológica do grafo
+                    topological_order = list(nx.topological_sort(G))
+
+                    # Calcular o ES
+                    for node in topological_order:
+                        for predecessor in G.predecessors(node):
+                            es[node] = max(es[node], es[predecessor] + G[predecessor][node]['weight'])
+
+                    # Calcular o LS
+                    for node in reversed(topological_order):
+                        if list(G.successors(node)):  # Verifica se é um nó de término
+                            ls[node] = min(ls[succ] - G[node][succ]['weight'] for succ in G.successors(node))
+                        else:
+                            ls[node] = es[node]
+
+                    return es, ls
+
 
             def is_edge_in_critical_path(u, v, caminho_critico):
-                # Implemente a função is_edge_in_critical_path conforme necessário
-                pass
+                return (u, v) in zip(caminho_critico, caminho_critico[1:])
 
             def plot_activities(atividades):
                 # Criar o grafo direcionado
@@ -243,24 +269,15 @@ def realizar_analise(atividades, Tipo):
 
                 dot.attr(label='CPM Network', labelloc='bottom')
 
-                caminho_critico_nos = [node for node in caminho_critico if is_node_in_critical_path(node, caminho_critico)]
-                caminho_critico_nos = caminho_critico_nos[1:]
-
-                tempo_total_critico = 0
-                for numb in caminho_critico_nos:
-                    tempo_total_critico += atividades_df.loc [numb, 'duracao']
-                
-                caminho_critico_string = " --> ".join(caminho_critico_nos)
-
                 # Salvar a imagem do grafo em formato PNG
                 static_dir = os.path.join(os.getcwd(), 'static')
                 image_path = os.path.join(static_dir, 'rede_atividades')
-                atividades_df.to_excel('report.xlsx')
+                atividades_df.to_excel(static_dir + "/dataframeCPM.xlsx")
                 dot.render(image_path, view=False, format='png')
 
     if Tipo == 'CPM':
-        plot_activities(atividades)
-        return
+        caminho_critico = plot_activities(atividades)
+        return caminho_critico
     elif Tipo == 'PERT':
         caminho_critico, tempo_total, edges_df = plot_activities(atividades)
         return caminho_critico, tempo_total, edges_df
@@ -308,7 +325,72 @@ def PERT():
 @app.route('/analyze', methods=['POST'])
 @login_required
 def analyze():
-    if request.method == 'POST':
+
+        if request.method == 'POST':
+            csv_file = request.files['csv_file']  # Obter o arquivo CSV do formulário
+            json_file = request.files['json_file']
+
+
+            if csv_file:  # Se um arquivo CSV foi enviado
+                csv_content = csv_file.read().decode('utf-8')
+
+                # Crie uma lista para armazenar os dados do CSV
+                atividades_from_csv = {}
+
+                # Use um leitor CSV para ler as linhas do arquivo CSV
+                csv_reader = csv.reader(csv_content.splitlines())
+                
+                # Pule a primeira linha (cabeçalho)
+                next(csv_reader)
+                
+                for row in csv_reader:
+                    # Extraia os dados de cada linha
+                    atividade, precedentes, ducaracao = row
+                    
+                    # Converta os valores numéricos para inteiros ou floats, conforme necessário
+                    ducaracao = float(ducaracao)
+                    
+                    # Crie um dicionário para representar cada atividade e seus dados
+                    atividade_data = {
+                        "precedentes": precedentes.split(', ') if precedentes else [],
+                        "ducaracao": ducaracao
+                    }
+                    
+                    # Adicione o dicionário à lista de atividades
+                    atividades_from_csv[atividade] = (atividade_data)
+                
+                atividades_json = atividades_from_csv
+
+            elif json_file:  # Se um arquivo JSON foi enviado
+                json_content = json_file.read().decode('utf-8')
+                try:
+                    data_from_json = json.loads(json_content)
+                    atividades_json = data_from_json
+                except json.JSONDecodeError:
+                    erro = "O arquivo JSON não é válido."
+                    return render_template("home.html", erro=erro)
+                
+            else:
+                atividades = request.form.get("atividades")
+                # Verificar se o campo de atividades está vazio
+                if not atividades:
+                    erro = "O campo de atividades não pode estar vazio."
+                    return render_template("home.html", erro=erro)
+                
+                try:
+                    atividades_json = json.loads(atividades)
+
+                except json.JSONDecodeError:
+                    erro = "O campo de atividades deve ser um JSON válido."
+                    return render_template("homePERT.html", erro=erro)
+
+            caminho_critico = realizar_analise(atividades_json, 'CPM')
+            session['caminho_critico'] = caminho_critico
+            session['atividades_json'] = atividades_json
+
+            return render_template('result.html', caminho_critico=caminho_critico, atividades_json=atividades_json)
+
+"""     if request.method == 'POST':
         csv_file = request.files['csv_file']  # Obter o arquivo CSV do formulário
         if csv_file:  # Se um arquivo CSV foi enviado
             csv_content = csv_file.read().decode('utf-8')
@@ -334,7 +416,7 @@ def analyze():
 
         results = realizar_analise(atividades_json, 'CPM')
         session['analysis_results'] = results
-        return redirect(url_for('result'))
+        return redirect(url_for('result')) """
     
 
 @app.route('/analyzePERT', methods=['POST'])
@@ -362,9 +444,9 @@ def analyzePERT():
                 atividade, precedentes, t_otimista, t_pessimista, t_provavel = row
                 
                 # Converta os valores numéricos para inteiros ou floats, conforme necessário
-                t_otimista = int(t_otimista)
-                t_pessimista = int(t_pessimista)
-                t_provavel = int(t_provavel)
+                t_otimista = float(t_otimista)
+                t_pessimista = float(t_pessimista)
+                t_provavel = float(t_provavel)
                 
                 # Crie um dicionário para representar cada atividade e seus dados
                 atividade_data = {
@@ -443,6 +525,13 @@ def download_xls():
     # Baixar o arquivo XLSX do Amazon S3
     """ s3.download_file(BUCKET_NAME, 'report.xlsx', 'static/report.xlsx') """
     return send_from_directory('static', 'dataframe.xlsx', as_attachment=True)
+
+@app.route("/download_xls_CPM")
+@login_required
+def download_xls_CPM():
+    # Baixar o arquivo XLSX do Amazon S3
+    """ s3.download_file(BUCKET_NAME, 'report.xlsx', 'static/report.xlsx') """
+    return send_from_directory('static', 'dataframeCPM.xlsx', as_attachment=True)
 
 
 @app.route('/help')

@@ -12,16 +12,16 @@ digraph {
 	H [label=H ports=we shape=circle]
 	Start [label=Start ports=we shape=circle]
 	End [label=End ports=we shape=circle]
-	A:e -> B:w
+	A -> B [color=red]
 	A:e -> C:w
 	B:e -> D:w
-	B:e -> E:w
+	B -> E [color=red]
 	C:e -> F:w
-	D -> G [color=red]
+	D:e -> G:w
 	E:e -> G:w
 	F:e -> H:w
 	G:e -> End:w
 	H:e -> End:w
 	Start:e -> A:w
-	label="PERT NETWORK | CONEXOS | SOMA: 15.33" labelloc=bottom
+	label="PERT NETWORK | CONEXOS | SOMA: 21.17" labelloc=bottom
 }
